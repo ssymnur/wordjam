@@ -619,7 +619,8 @@ class LevelPage extends StatelessWidget {
   }
 }
 
-class WordListPage extends StatelessWidget {
+
+class WordListPage extends StatefulWidget {
   final String level;
   final List<Map<String, dynamic>> words;
 
@@ -630,76 +631,484 @@ class WordListPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$level Vocabulary ✨'),
-        backgroundColor: lavender,
-        foregroundColor: darkPurple,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              lavender,
-              Color(0xFFFFE2F0),
-            ],
-          ),
-        ),
-        child: ListView.builder(
-          padding: const EdgeInsets.all(20),
-          itemCount: words.length,
-          itemBuilder: (context, index) {
-            final word = words[index];
+  State<WordListPage> createState() => _WordListPageState();
+}
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 14),
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+class _WordListPageState extends State<WordListPage> {
+  int currentIndex = 0;
+  int xp = 0;
+  final Set<int> learnedWords = {};
+
+  void nextWord() {
+    if (currentIndex < widget.words.length - 1) {
+      setState(() {
+        currentIndex++;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tebrikler! Bu seviyedeki tüm kelimeleri gördün ✨'),
+        ),
+      );
+    }
+  }
+
+  void markAsLearned() {
+    if (learnedWords.contains(currentIndex)) return;
+
+    setState(() {
+      learnedWords.add(currentIndex);
+      xp += 10;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('+10 XP kazandın! Harika gidiyorsun 💗'),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.words.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Bu seviyede henüz kelime bulunmuyor.'),
+        ),
+      );
+    }
+
+    final word = widget.words[currentIndex];
+
+    final String wordText = word['word']?.toString() ?? '';
+    final String meaning = word['meaning']?.toString() ?? '';
+    final String example = word['example']?.toString() ?? '';
+    final String exampleMeaning =
+        word['exampleMeaning']?.toString() ?? '';
+
+    final String wordType =
+        word['type']?.toString() ?? 'KELİME';
+
+    final String pronunciation =
+        word['pronunciation']?.toString() ?? '';
+
+    final bool isLearned = learnedWords.contains(currentIndex);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFFCF7),
+
+      body: SafeArea(
+        child: Column(
+          children: [
+            // TOP BAR
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      word['word'],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back_ios_new, size: 17),
+                    label: const Text('Kavanoz'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF45546D),
+                      side: const BorderSide(
+                        color: Color(0xFFDDE5F1),
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                  ),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F0FF),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Text(
+                      '${widget.level} • #${currentIndex + 1}/${widget.words.length}',
                       style: const TextStyle(
-                        fontSize: 23,
+                        color: Color(0xFF6252F5),
                         fontWeight: FontWeight.bold,
-                        color: darkPurple,
+                        fontSize: 15,
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      word['meaning'],
-                      style: const TextStyle(
-                        fontSize: 17,
-                        color: pink,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                ],
+              ),
+            ),
+
+            // WORD CARD
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFFFFF3FA),
+                        Color(0xFFFFE3EA),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(word['example']),
-                    const SizedBox(height: 4),
-                    Text(
-                      word['exampleMeaning'],
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    borderRadius: BorderRadius.circular(38),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 3,
                     ),
-                  ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.pink.withOpacity(0.12),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+
+                  child: Column(
+                    children: [
+                      // WORD TYPE
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 17,
+                              vertical: 9,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Text(
+                              wordType.toUpperCase(),
+                              style: const TextStyle(
+                                color: Color(0xFFE92D80),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+
+                          IconButton(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Kelime seslendirmesini bir sonraki adımda ekleyeceğiz 🔊',
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.volume_up_rounded,
+                              size: 30,
+                              color: Color(0xFF39465D),
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              fixedSize: const Size(55, 55),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 35),
+
+                      // DECORATIVE ICON
+                      Container(
+                        width: 125,
+                        height: 125,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFBE5F2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '☺',
+                            style: TextStyle(
+                              fontSize: 85,
+                              color: Color(0xFFE83E91),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // ENGLISH WORD
+                      Text(
+                        wordText,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF17172E),
+                        ),
+                      ),
+
+                      if (pronunciation.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          pronunciation,
+                          style: const TextStyle(
+                            fontSize: 19,
+                            color: Color(0xFF71809A),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 25),
+
+                      // TURKISH MEANING
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 22,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'TÜRKÇE ANLAMI',
+                              style: TextStyle(
+                                color: Color(0xFF9AA9C0),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              meaning,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Color(0xFF202B40),
+                                fontSize: 23,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // EXAMPLE SENTENCE
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.65),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'ÖRNEK CÜMLE',
+                              style: TextStyle(
+                                color: Color(0xFF687991),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            Text(
+                              '"$example"',
+                              style: const TextStyle(
+                                color: Color(0xFF202B40),
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            Text(
+                              exampleMeaning,
+                              style: const TextStyle(
+                                color: Color(0xFF71809A),
+                                fontSize: 16,
+                                fontStyle: FontStyle.italic,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            );
-          },
+            ),
+
+            // ACTION BUTTONS
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: nextWord,
+                      icon: const Icon(Icons.arrow_forward_ios),
+                      label: const Text('Sonraki Kağıt'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF39465D),
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: Color(0xFFDDE5F1),
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 22,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: isLearned ? null : markAsLearned,
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: Text(
+                        isLearned ? 'Öğrenildi!' : 'Öğrendim! (+10 XP)',
+                        textAlign: TextAlign.center,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF079B70),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color(0xFF079B70),
+                        disabledForegroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 22,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // BOTTOM NAVIGATION
+            Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 12,
+                horizontal: 8,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(
+                    color: Color(0xFFE9EDF4),
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: const [
+                  _BottomItem(
+                    icon: Icons.auto_awesome,
+                    label: 'Kavanoz',
+                    selected: true,
+                  ),
+                  _BottomItem(
+                    icon: Icons.layers_outlined,
+                    label: 'Kelimeler',
+                  ),
+                  _BottomItem(
+                    icon: Icons.menu_book_rounded,
+                    label: 'Hikâye',
+                  ),
+                  _BottomItem(
+                    icon: Icons.help_outline_rounded,
+                    label: 'Quiz',
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+class _BottomItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+
+  const _BottomItem({
+    required this.icon,
+    required this.label,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 25,
+          color: selected
+              ? const Color(0xFF6252F5)
+              : const Color(0xFF96A6BD),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: selected
+                ? const Color(0xFF6252F5)
+                : const Color(0xFF96A6BD),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 class FloatingLetter extends StatefulWidget {
   final String letter;
